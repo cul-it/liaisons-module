@@ -1,0 +1,385 @@
+<?php
+// $Id$
+/**
+ * @file
+ * Module for displaying liaisons.
+ *
+ * This module works with four content types: Liaison, Liaison Center or Program,
+ * Liaison College, and Liaison Department. It handles the display of each type and
+ * cross-linking between them. It also includes searching and breadcrumbs.
+ */
+
+/**
+ * Implements hook_menu()
+ */
+function liaisons_menu() {
+
+	// Entry point to liaisons system
+	$items['mtest'] = array(
+    'title' => 'Library Liaisons Program',
+    'page callback' => 'liaisons_home',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  // Display of a single liaison
+  $items['mtest/liaison'] = array(
+    'title' => 'Liaison',
+    'page callback' => 'liaisons_show_liaison',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  ); 
+  // Display of all liaisons
+  $items['mtest/liaison/list'] = array(
+    'title' => 'All Liaisons',
+    'page callback' => 'liaisons_list_liaisons',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  ); 
+  // Search results for a liaison name
+  $items['mtest/liaison/search'] = array(
+    'title' => 'Liaison Search Results',
+    'page callback' => 'liaisons_search_liaisons',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  ); 
+  // Display of a college or department or center
+  $items['mtest/dept'] = array(
+    'title' => 'Department',
+    'page callback' => 'liaisons_browse_colleges',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;	
+}
+
+/**
+ * Display the "home" page for the liaisons system.
+ *
+ * This function presents sections for liaisons, colleges, and separate
+ * programs and centers. The liaisons section includes a search box and
+ * a link to all liaisons; colleges and departments are linked to a 
+ * view for that entity.
+ */
+function liaisons_home() {
+
+	// Set breadcrumbs
+	$breadcrumb = array();
+	$breadcrumb[] = l('Home', '');
+	$breadcrumb[] = l('Liaisons', 'mtest');
+	drupal_set_breadcrumb($breadcrumb);
+
+	// Retrieve lists of the various data types
+	//$liaisons = liaisons_get_liaisons();
+	//sort($liaisons);
+	$colleges = liaisons_get_nodes('liaison_college');
+	$centers  = liaisons_get_nodes('liaison_center');
+
+	// Header text
+	$text = '
+		<p>Liaisons are your go-to librarians, connecting you to library services
+		and collections. They are subject specialists who provide support 
+		for faculty and student research, instruction, and scholarly communication, 
+		who build rich library collections or can refer you to other library 
+		experts.</p><p>Discover: Who’s my library liaison?</p>
+	';
+
+	// Liaisons: link to ful list and search box
+	$text .= '<h1>Liaisons</h1>';
+	$text .= '<p>' . l('See all liaisons', 'mtest/liaison/list') . '</p>';
+	$text .= '<p>Search by liaison name</p>';
+	$text .= drupal_get_form('liaisons_search_form');
+
+	// TODO: add department search?
+	//$text .= '<p>Search by college, department, or program name</p>';
+
+	// foreach ($liaisons as $l) {
+	// 	$node = node_load($l);
+	// 	$text .= "<div>" . l($node->title, 'mtest/liaison/' . $node->nid) . '</div>';
+	// 	//$text .= "<pre>" . print_r($node, 1) . "</pre>";
+	// }
+
+	$text .= '<br/><h1>Colleges</h1>';
+	foreach ($colleges as $c) {
+		$node = node_load($c);
+		$text .= "<div>" . l($node->title, "mtest/dept/" . $node->nid) . '</div>';
+	}
+
+	$text .= '<br/><h1>Centers and Programs</h1>';
+	foreach ($centers as $c) {
+		$node = node_load($c);
+		$text .= "<div>" . l($node->title, "mtest/dept/" . $node->nid) . '</div>';
+	}
+
+	return theme('liaisons_home', $text);
+}
+
+/*
+ * Display information about a single liaison.
+ *
+ * @param int $nid
+ *   The node ID of the liaison
+ */
+function liaisons_show_liaison($nid) {
+
+	// Set breadcrumbs
+	$breadcrumb = array();
+	$breadcrumb[] = l('Home', '');
+	$breadcrumb[] = l('Liaisons', 'mtest');
+	$breadcrumb[] = 'Liaison';
+	drupal_set_breadcrumb($breadcrumb);
+
+	$text = liaisons_format_liaison(node_load($nid));
+
+	return theme('liaisons_home', $text);
+}
+
+/*
+ * Display a list with information for all the liaisons in the system.
+ */
+function liaisons_list_liaisons() {
+
+	// Set breadcrumbs
+	$breadcrumb = array();
+	$breadcrumb[] = l('Home', '');
+	$breadcrumb[] = l('Liaisons', 'mtest');
+	$breadcrumb[] = 'Liaison';
+	drupal_set_breadcrumb($breadcrumb);
+
+	$liaisons = liaisons_get_nodes('liaison');
+	$text = '';
+	foreach ($liaisons as $l) {
+		$text .= '<div style="clear:both; padding: 10px">' 
+					. liaisons_format_liaison(node_load($l)) . '</div>';
+	}
+
+	return theme('liaisons_home', $text);
+}
+
+/*
+ * Return a formatted list of liaison search results.
+ * 
+ * Performs a search for liaison node titles that contain the search text.
+ * Each result is loaded and formatted.
+ * 
+ * @param string $query_string
+ *   The text to search for in liaison node titles
+ * 
+ * @return
+ *   A themed list of formatted liaison nodes. 
+ */
+function liaisons_search_liaisons($query_string) {
+
+	// Set breadcrumbs
+	$breadcrumb = array();
+	$breadcrumb[] = l('Home', '');
+	$breadcrumb[] = l('Liaisons', 'mtest');
+	$breadcrumb[] = 'Liaison';
+	drupal_set_breadcrumb($breadcrumb);
+
+	$result = db_query("SELECT nid FROM node WHERE type = 'liaison' AND title LIKE '%%%s%'", $query_string);
+	$text = '';
+	$liaisons = array();
+	while ($obj = db_fetch_object ($result)) {
+		// Store formatted liaisons in a hash so we can sort them before presentation
+		$node = node_load($obj->nid);
+		// Hash key is lastnamefirstname, which ought to be unique
+		$liaisons[$node->field_lastname[0]['value'] . $node->field_firstname[0]['value']] = liaisons_format_liaison($node);
+	}
+	ksort($liaisons);
+
+	foreach ($liaisons as $l) {
+		$text .= '<div style="clear:both; padding: 10px">' . $l . '</div>';
+	}
+
+	if ($text == '') { $text = "<p>No results found for '$query_string'.</p>"; }
+
+	return theme('liaisons_home', $text);
+}
+
+/*
+ * Format information about a single liaison.
+ * 
+ * @param node $liaison
+ *   A complete (liaison) node
+ *
+ * @return
+ *   An HTML block with liaison information
+ */
+function liaisons_format_liaison($liaison) {
+	
+	// photo
+	$text = '<img src="' . $liaison->field_image_url[0]['url'] 
+				. '" height="200" width="180" style="float:left; border: 1px solid" />';
+
+	$text .= '<div style="float:left; padding: 20px;">';
+	// Add name
+	$text .= '<h2>' . $liaison->title . '</h2>';
+
+	// title
+	$text .= '<div>' . $liaison->field_work_title[0]['value'] . '</div>';
+
+	// more info
+	$text .= '<div>' 
+				. l('About this liaison', $liaison->field_liaison_uri[0]['value']) 
+				. '</div>';
+
+	// email/contact
+	$text .= '<div>' 
+				. l('Contact this liaison', 'mailto:' . $liaison->field_netid[0]['value'] . '@cornell.edu') 
+				. '</div>';
+
+	// Retrieve a list of the departments or colleges for which this individual is a liaison
+	$entities = $liaison->field_liaison_to;
+	$text .= '<h4>Liaison to:</h4>';
+	foreach ($entities as $e) {
+		$query = "SELECT nid FROM {content_field_dept_uri} WHERE field_dept_uri_value = '%s'";
+		$result = db_fetch_object(db_query($query, $e['value']));
+  	$liaison_to = node_load($result->nid);
+		$text .= '<div>' . l($liaison_to->title, 'mtest/dept/' . $result->nid) . '</div>';
+	}
+
+	$text .= '</div>';
+
+	return $text;
+}
+
+/*
+ * Display information about a college, department, or center.
+ * 
+ * Each entity is linked to the same function to display any liaisons it has
+ * or sub-departments or units that it may contain.
+ *
+ * @param int $nid
+ *   The node ID of the entity to display
+ *
+ * @return
+ *   Themed HTML of the entity display
+ */
+function liaisons_browse_colleges($nid) {
+
+	$college = node_load($nid);
+	$text = '<h1>' . $college->title . '</h1>';
+
+	// Set breadcrumbs
+	$breadcrumb = array();
+	$breadcrumb[] = l('Home', '');
+	$breadcrumb[] = l('Liaisons', 'mtest');
+	if ($college->field_dept_parent_uri[0]['value']) {
+		$query = "SELECT nid FROM {content_field_dept_uri} WHERE field_dept_uri_value = '%s'";
+	  $result = db_fetch_object(db_query($query, $college->field_dept_parent_uri[0]['value']));
+	  $parent = node_load($result->nid);
+		$breadcrumb[] = l($parent->title, 'mtest/dept/' . $parent->nid);
+	}
+	//$breadcrumb[] = $college->title;
+	drupal_set_breadcrumb($breadcrumb);
+
+	// Figure out whether this entity has liaisons. If it does, show them.
+	$liaisons = array();
+	foreach ($college->field_dept_liaison_uri as $l) {
+		if ($l['value'] != null) {
+			$query = "SELECT nid FROM {content_type_liaison} WHERE field_liaison_uri_value = '%s'";
+	    $result = db_fetch_object(db_query($query, $l['value']));
+			$liaisons[] = node_load($result->nid);	
+		}
+ 	}  
+ 	if (count($liaisons) > 0) {
+ 		$text .= '<h3>Liaisons</h3>';
+ 		foreach ($liaisons as $l) {
+ 			$text .= '<div>' . l($l->title, 'mtest/liaison/' . $l->nid) . '</div>';
+ 		}
+ 	}
+
+	// Figure out whether this deparmtent has sub-departments. If it does, show them.
+  $query = "SELECT nid FROM {content_field_dept_parent_uri} WHERE field_dept_parent_uri_value = '%s'";
+  $result = db_query($query, $college->field_dept_uri[0]['value']);
+	$nids = array();
+	while ($obj = db_fetch_object ($result)) {
+  	$nids[] = $obj->nid;
+	}
+	$departments = array();
+	foreach ($nids as $nid) {
+		$departments[] = node_load($nid);
+	}
+	if (count($departments) > 0) {
+		$text .= '<h3>Departments:</h3>';
+		foreach ($departments as $d) {
+			$text .= '<div>' . l($d->title, 'mtest/dept/' . $d->nid) . '</div>';
+		}
+	}
+
+	return theme('liaisons_home', $text);
+}
+
+/*
+ * Return a list of node IDs of a given node type
+ * 
+ * @param $type
+ *   The Drupal node type to return (e.g., liaison, liaison_college)
+ * 
+ * @return
+ *   An array of node IDs
+ */ 
+function liaisons_get_nodes($type) {
+
+	$result = db_query("SELECT nid FROM node WHERE type = '%s' ", $type);
+	$nids = array();
+	while ($obj = db_fetch_object ($result)) {
+	  	$nids[] = $obj->nid;
+	}
+
+	return $nids;
+}
+
+/**
+ * Implementation of hook_theme
+ */
+function liaisons_theme() {
+  return array (
+  	'liaisons_home' => array()
+  );
+}
+
+/**
+ * Default theme for the liaisons system (not much!)
+ */
+function theme_liaisons_home($text) {
+
+	$output .=  $text;
+	return $output;
+}
+
+/**
+ * Create the liaison search form
+ */
+function liaisons_search_form() {
+
+  $opts = array('absolute'=>TRUE);
+  $url = url('mtest', $opts);
+  $form['searchBox'] = array(
+    '#type' => 'textfield',
+    '#id' => 'searchBox',
+    '#name' => 'searchBox',
+    '#default_value' => '',
+    '#size' => 20,
+    '#maxlength' => 255,
+    // '#attributes' => array( 'autocomplete'=>'off',
+    //                         'class'=>'course_help_searchBox form-autocomplete'
+    // ),
+  );
+  $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Search'),
+      '#attributes' => array( 'class'=>'go' )
+  );
+
+  return $form;
+
+}
+
+/**
+ * Submit function for liaisons_search_form()
+ */
+function liaisons_search_form_submit($form, &$form_state) {
+   $form_state['redirect'] = 'mtest/liaison/search/'.$form_state['values']['searchBox'];
+}
