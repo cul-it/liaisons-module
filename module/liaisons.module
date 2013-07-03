@@ -72,8 +72,8 @@ function liaisons_home() {
 	// Retrieve lists of the various data types
 	//$liaisons = liaisons_get_liaisons();
 	//sort($liaisons);
-	$colleges = liaisons_get_nodes('liaison_college');
-	$centers  = liaisons_get_nodes('liaison_center');
+	$college_nids = liaisons_get_nodes('liaison_college');
+	$center_nids  = liaisons_get_nodes('liaison_center');
 
 	// Header text
 	$text = '
@@ -100,15 +100,27 @@ function liaisons_home() {
 	// }
 
 	$text .= '<br/><h1>Colleges</h1>';
+
+	// Convert nids into nodes and sort them
+	$colleges = array();
+	foreach ($college_nids as $nid) {
+		$colleges[] = node_load($nid);
+	}
+	usort($colleges, 'liaisons_node_sort');
+
+	$centers = array();
+	foreach ($center_nids as $nid) {
+		$centers[] = node_load($nid);
+	}
+	usort($centers, 'liaisons_node_sort');
+
 	foreach ($colleges as $c) {
-		$node = node_load($c);
-		$text .= "<div>" . l($node->title, "mtest/dept/" . $node->nid) . '</div>';
+		$text .= "<div>" . l($c->title, "mtest/dept/" . $c->nid) . '</div>';
 	}
 
 	$text .= '<br/><h1>Centers and Programs</h1>';
 	foreach ($centers as $c) {
-		$node = node_load($c);
-		$text .= "<div>" . l($node->title, "mtest/dept/" . $node->nid) . '</div>';
+		$text .= "<div>" . l($c->title, "mtest/dept/" . $c->nid) . '</div>';
 	}
 
 	return theme('liaisons_home', $text);
@@ -283,6 +295,8 @@ function liaisons_browse_colleges($nid) {
 			$liaisons[] = node_load($result->nid);	
 		}
  	}  
+	usort($liaisons, 'liaisons_name_sort');
+
  	if (count($liaisons) > 0) {
  		$text .= '<h3>Liaisons</h3>';
  		foreach ($liaisons as $l) {
@@ -301,6 +315,8 @@ function liaisons_browse_colleges($nid) {
 	foreach ($nids as $nid) {
 		$departments[] = node_load($nid);
 	}
+	usort($departments, 'liaisons_node_sort');
+
 	if (count($departments) > 0) {
 		$text .= '<h3>Departments:</h3>';
 		foreach ($departments as $d) {
@@ -309,6 +325,51 @@ function liaisons_browse_colleges($nid) {
 	}
 
 	return theme('liaisons_home', $text);
+}
+
+/*
+ * Custom sorting function based on node titles
+ *
+ * @param node $a
+ * @param node $b
+ *
+ * @return
+ *   An integer in the set (-1,0,1) representing the sort value
+ */
+function liaisons_node_sort($a, $b) {
+
+	if ($a->title == $b->title) { return 0; }
+	return ($a->title < $b->title) ? -1 : 1;
+
+}
+
+/*
+ * Custom sorting function based on liaison names
+ *
+ * @param node $a
+ * @param node $b
+ *
+ * @return
+ *   An integer in the set (-1,0,1) representing the sort value
+ */
+function liaisons_name_sort($a, $b) {
+
+	$a_first = $a->field_firstname[0]['value'];
+	$a_last = $a->field_lastname[0]['value'];
+	$b_first = $b->field_firstname[0]['value'];
+	$b_last = $b->field_lastname[0]['value'];
+
+	if ($a_last == $b->last) { 
+		if ($a_first == $b_first) {
+			return 0; 
+		}
+		else {
+			return ($a_first < $b_first) ? -1 : 1;
+		}
+	}
+	else {
+		return ($a_last < $b_last) ? -1 : 1;
+	}
 }
 
 /*
