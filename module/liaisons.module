@@ -54,6 +54,24 @@ function liaisons_menu() {
 }
 
 /**
+ * Implementation of hook_cron()
+ */
+function liaisons_cron() {
+
+	// Make sure that each of our feed importers are run on a regular basis
+	// while (FEEDS_BATCH_COMPLETE != feeds_source('liaison_colleges', 0)->import());
+	// while (FEEDS_BATCH_COMPLETE != feeds_source('liaison_department', 0)->import());
+	// while (FEEDS_BATCH_COMPLETE != feeds_source('liaison_feed', 0)->import());
+	// while (FEEDS_BATCH_COMPLETE != feeds_source('liaison_organizations', 0)->import());
+	feeds_batch_set('import', 'liaison_feed', 0, $context);
+
+	// feeds_batch_set(t('Importing'), 'import', 'liaison_department', 0);
+	// feeds_batch_set(t('Importing'), 'import', 'liaison_feed', 0);
+	// feeds_batch_set(t('Importing'), 'import', 'liaison_organizations', 0);
+
+}
+
+/**
  * Display the "home" page for the liaisons system.
  *
  * This function presents sections for liaisons, colleges, and separate
@@ -84,11 +102,11 @@ function liaisons_home() {
 		experts.</p><p>Discover: Who’s my library liaison?</p>
 	';
 
-	// Liaisons: link to ful list and search box
+	// Liaisons: link to ful list 
 	$text .= '<h1>Liaisons</h1>';
 	$text .= '<p>' . l('See all liaisons', 'mtest/liaison/list') . '</p>';
-	$text .= '<p>Search by liaison name</p>';
-	$text .= drupal_get_form('liaisons_search_form');
+	// $text .= '<p>Search by liaison name</p>';
+	// $text .= drupal_get_form('liaisons_search_form');
 
 	// TODO: add department search?
 	//$text .= '<p>Search by college, department, or program name</p>';
@@ -99,7 +117,7 @@ function liaisons_home() {
 	// 	//$text .= "<pre>" . print_r($node, 1) . "</pre>";
 	// }
 
-	$text .= '<br/><h1>Colleges</h1>';
+	$text .= '<br/><h1>Search Liaisons by Colleges</h1>';
 
 	// Convert nids into nodes and sort them
 	$colleges = array();
@@ -118,7 +136,7 @@ function liaisons_home() {
 		$text .= "<div>" . l($c->title, "mtest/dept/" . $c->nid) . '</div>';
 	}
 
-	$text .= '<br/><h1>Centers and Programs</h1>';
+	$text .= '<br/><h1>Search Liaisons by Centers and Programs</h1>';
 	foreach ($centers as $c) {
 		$text .= "<div>" . l($c->title, "mtest/dept/" . $c->nid) . '</div>';
 	}
@@ -158,11 +176,17 @@ function liaisons_list_liaisons() {
 	$breadcrumb[] = 'Liaison';
 	drupal_set_breadcrumb($breadcrumb);
 
-	$liaisons = liaisons_get_nodes('liaison');
-	$text = '';
+	$nids = liaisons_get_nodes('liaison');
+	$liaisons = array();
+	foreach ($nids as $nid) {
+		$liaisons[] = node_load($nid);
+	}
+	usort($liaisons, 'liaisons_name_sort');
+
+	$text .= '';
 	foreach ($liaisons as $l) {
 		$text .= '<div style="clear:both; padding: 10px">' 
-					. liaisons_format_liaison(node_load($l)) . '</div>';
+					. liaisons_format_liaison($l) . '</div>';
 	}
 
 	return theme('liaisons_home', $text);
@@ -222,7 +246,7 @@ function liaisons_format_liaison($liaison) {
 	
 	// photo
 	$text = '<img src="' . $liaison->field_image_url[0]['url'] 
-				. '" height="200" width="180" style="float:left; border: 1px solid" />';
+				. '" height="200" width="200" style="float:left; border: 1px solid" />';
 
 	$text .= '<div style="float:left; padding: 20px;">';
 	// Add name
@@ -244,11 +268,13 @@ function liaisons_format_liaison($liaison) {
 	// Retrieve a list of the departments or colleges for which this individual is a liaison
 	$entities = $liaison->field_liaison_to;
 	$text .= '<h4>Liaison to:</h4>';
-	foreach ($entities as $e) {
-		$query = "SELECT nid FROM {content_field_dept_uri} WHERE field_dept_uri_value = '%s'";
-		$result = db_fetch_object(db_query($query, $e['value']));
-  	$liaison_to = node_load($result->nid);
-		$text .= '<div>' . l($liaison_to->title, 'mtest/dept/' . $result->nid) . '</div>';
+	if (count($entities) > 0) {
+		foreach ($entities as $e) {
+			$query = "SELECT nid FROM {content_field_dept_uri} WHERE field_dept_uri_value = '%s'";
+			$result = db_fetch_object(db_query($query, $e['value']));
+	  	$liaison_to = node_load($result->nid);
+			$text .= '<div>' . l($liaison_to->title, 'mtest/dept/' . $result->nid) . '</div>';
+		}
 	}
 
 	$text .= '</div>';
@@ -413,34 +439,34 @@ function theme_liaisons_home($text) {
 /**
  * Create the liaison search form
  */
-function liaisons_search_form() {
+// function liaisons_search_form() {
 
-  $opts = array('absolute'=>TRUE);
-  $url = url('mtest', $opts);
-  $form['searchBox'] = array(
-    '#type' => 'textfield',
-    '#id' => 'searchBox',
-    '#name' => 'searchBox',
-    '#default_value' => '',
-    '#size' => 20,
-    '#maxlength' => 255,
-    // '#attributes' => array( 'autocomplete'=>'off',
-    //                         'class'=>'course_help_searchBox form-autocomplete'
-    // ),
-  );
-  $form['submit'] = array(
-      '#type' => 'submit',
-      '#value' => t('Search'),
-      '#attributes' => array( 'class'=>'go' )
-  );
+//   $opts = array('absolute'=>TRUE);
+//   $url = url('mtest', $opts);
+//   $form['searchBox'] = array(
+//     '#type' => 'textfield',
+//     '#id' => 'searchBox',
+//     '#name' => 'searchBox',
+//     '#default_value' => '',
+//     '#size' => 20,
+//     '#maxlength' => 255,
+//     // '#attributes' => array( 'autocomplete'=>'off',
+//     //                         'class'=>'course_help_searchBox form-autocomplete'
+//     // ),
+//   );
+//   $form['submit'] = array(
+//       '#type' => 'submit',
+//       '#value' => t('Search'),
+//       '#attributes' => array( 'class'=>'go' )
+//   );
 
-  return $form;
+//   return $form;
 
-}
+// }
 
 /**
  * Submit function for liaisons_search_form()
  */
-function liaisons_search_form_submit($form, &$form_state) {
-   $form_state['redirect'] = 'mtest/liaison/search/'.$form_state['values']['searchBox'];
-}
+// function liaisons_search_form_submit($form, &$form_state) {
+//    $form_state['redirect'] = 'mtest/liaison/search/'.$form_state['values']['searchBox'];
+// }

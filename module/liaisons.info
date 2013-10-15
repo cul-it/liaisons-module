@@ -1,7 +1,7 @@
 ;$Id$
 name = "Liaisons"
-description = ""
+description = "Provides an organized display of library liaisons and associated University departments that have liaisons."
 core = 6.x
-version = 6.x-1.0-beta
+version = 6.x-1.0
 php = 5.2.6
 package = Cornell University Library
