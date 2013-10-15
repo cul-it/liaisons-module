@@ -131,15 +131,19 @@ function liaisons_home() {
 		$centers[] = node_load($nid);
 	}
 	usort($centers, 'liaisons_node_sort');
-
+	
+	$text .= "<ul>";
 	foreach ($colleges as $c) {
-		$text .= "<div>" . l($c->title, "mtest/dept/" . $c->nid) . '</div>';
+		$text .= "<li>" . l($c->title, "mtest/dept/" . $c->nid) . '</li>';
 	}
+	$text .= "</ul>";
 
 	$text .= '<br/><h1>Search Liaisons by Centers and Programs</h1>';
+	$text .= "<ul>";
 	foreach ($centers as $c) {
-		$text .= "<div>" . l($c->title, "mtest/dept/" . $c->nid) . '</div>';
+		$text .= "<li>" . l($c->title, "mtest/dept/" . $c->nid) . '</li>';
 	}
+	$text .= "</ul>";
 
 	return theme('liaisons_home', $text);
 }
@@ -325,9 +329,11 @@ function liaisons_browse_colleges($nid) {
 
  	if (count($liaisons) > 0) {
  		$text .= '<h3>Liaisons</h3>';
+ 		$text .= '<ul>';
  		foreach ($liaisons as $l) {
- 			$text .= '<div>' . l($l->title, 'mtest/liaison/' . $l->nid) . '</div>';
+ 			$text .= '<li>' . l($l->title, 'mtest/liaison/' . $l->nid) . '</li>';
  		}
+ 		$text .= '</ul>';
  	}
 
 	// Figure out whether this deparmtent has sub-departments. If it does, show them.
@@ -345,9 +351,11 @@ function liaisons_browse_colleges($nid) {
 
 	if (count($departments) > 0) {
 		$text .= '<h3>Departments:</h3>';
+		$text .= '<ul>';
 		foreach ($departments as $d) {
-			$text .= '<div>' . l($d->title, 'mtest/dept/' . $d->nid) . '</div>';
+			$text .= '<li>' . l($d->title, 'mtest/dept/' . $d->nid) . '</li>';
 		}
+		$text .= '</ul>';
 	}
 
 	return theme('liaisons_home', $text);
