@@ -15,35 +15,35 @@
 function liaisons_menu() {
 
 	// Entry point to liaisons system
-	$items['mtest'] = array(
+	$items['svcs/serve/liaisons'] = array(
     'title' => 'Library Liaisons Program',
     'page callback' => 'liaisons_home',
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
   );
   // Display of a single liaison
-  $items['mtest/liaison'] = array(
+  $items['svcs/serve/liaisons/liaison'] = array(
     'title' => 'Liaison',
     'page callback' => 'liaisons_show_liaison',
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
   ); 
   // Display of all liaisons
-  $items['mtest/liaison/list'] = array(
+  $items['svcs/serve/liaisons/liaison/list'] = array(
     'title' => 'All Liaisons',
     'page callback' => 'liaisons_list_liaisons',
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
   ); 
   // Search results for a liaison name
-  $items['mtest/liaison/search'] = array(
+  $items['svcs/serve/liaisons/liaison/search'] = array(
     'title' => 'Liaison Search Results',
     'page callback' => 'liaisons_search_liaisons',
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
   ); 
   // Display of a college or department or center
-  $items['mtest/dept'] = array(
+  $items['svcs/serve/liaisons/dept'] = array(
     'title' => 'Department',
     'page callback' => 'liaisons_browse_colleges',
     'access arguments' => array('access content'),
@@ -84,7 +84,7 @@ function liaisons_home() {
 	// Set breadcrumbs
 	$breadcrumb = array();
 	$breadcrumb[] = l('Home', '');
-	$breadcrumb[] = l('Liaisons', 'mtest');
+	$breadcrumb[] = l('Liaisons', 'svcs/serve/liaisons');
 	drupal_set_breadcrumb($breadcrumb);
 
 	// Retrieve lists of the various data types
@@ -104,7 +104,7 @@ function liaisons_home() {
 
 	// Liaisons: link to ful list 
 	$text .= '<h1>Liaisons</h1>';
-	$text .= '<p>' . l('See all liaisons', 'mtest/liaison/list') . '</p>';
+	$text .= '<p>' . l('See all liaisons', 'svcs/serve/liaisons/liaison/list') . '</p>';
 	// $text .= '<p>Search by liaison name</p>';
 	// $text .= drupal_get_form('liaisons_search_form');
 
@@ -113,7 +113,7 @@ function liaisons_home() {
 
 	// foreach ($liaisons as $l) {
 	// 	$node = node_load($l);
-	// 	$text .= "<div>" . l($node->title, 'mtest/liaison/' . $node->nid) . '</div>';
+	// 	$text .= "<div>" . l($node->title, 'svcs/serve/liaisons/liaison/' . $node->nid) . '</div>';
 	// 	//$text .= "<pre>" . print_r($node, 1) . "</pre>";
 	// }
 
@@ -134,14 +134,14 @@ function liaisons_home() {
 	
 	$text .= "<ul>";
 	foreach ($colleges as $c) {
-		$text .= "<li>" . l($c->title, "mtest/dept/" . $c->nid) . '</li>';
+		$text .= "<li>" . l($c->title, "svcs/serve/liaisons/dept/" . $c->nid) . '</li>';
 	}
 	$text .= "</ul>";
 
 	$text .= '<br/><h1>Search Liaisons by Centers and Programs</h1>';
 	$text .= "<ul>";
 	foreach ($centers as $c) {
-		$text .= "<li>" . l($c->title, "mtest/dept/" . $c->nid) . '</li>';
+		$text .= "<li>" . l($c->title, "svcs/serve/liaisons/dept/" . $c->nid) . '</li>';
 	}
 	$text .= "</ul>";
 
@@ -159,7 +159,7 @@ function liaisons_show_liaison($nid) {
 	// Set breadcrumbs
 	$breadcrumb = array();
 	$breadcrumb[] = l('Home', '');
-	$breadcrumb[] = l('Liaisons', 'mtest');
+	$breadcrumb[] = l('Liaisons', 'svcs/serve/liaisons');
 	$breadcrumb[] = 'Liaison';
 	drupal_set_breadcrumb($breadcrumb);
 
@@ -176,7 +176,7 @@ function liaisons_list_liaisons() {
 	// Set breadcrumbs
 	$breadcrumb = array();
 	$breadcrumb[] = l('Home', '');
-	$breadcrumb[] = l('Liaisons', 'mtest');
+	$breadcrumb[] = l('Liaisons', 'svcs/serve/liaisons');
 	$breadcrumb[] = 'Liaison';
 	drupal_set_breadcrumb($breadcrumb);
 
@@ -213,7 +213,7 @@ function liaisons_search_liaisons($query_string) {
 	// Set breadcrumbs
 	$breadcrumb = array();
 	$breadcrumb[] = l('Home', '');
-	$breadcrumb[] = l('Liaisons', 'mtest');
+	$breadcrumb[] = l('Liaisons', 'svcs/serve/liaisons');
 	$breadcrumb[] = 'Liaison';
 	drupal_set_breadcrumb($breadcrumb);
 
@@ -277,7 +277,7 @@ function liaisons_format_liaison($liaison) {
 			$query = "SELECT nid FROM {content_field_dept_uri} WHERE field_dept_uri_value = '%s'";
 			$result = db_fetch_object(db_query($query, $e['value']));
 	  	$liaison_to = node_load($result->nid);
-			$text .= '<div>' . l($liaison_to->title, 'mtest/dept/' . $result->nid) . '</div>';
+			$text .= '<div>' . l($liaison_to->title, 'svcs/serve/liaisons/dept/' . $result->nid) . '</div>';
 		}
 	}
 
@@ -306,12 +306,12 @@ function liaisons_browse_colleges($nid) {
 	// Set breadcrumbs
 	$breadcrumb = array();
 	$breadcrumb[] = l('Home', '');
-	$breadcrumb[] = l('Liaisons', 'mtest');
+	$breadcrumb[] = l('Liaisons', 'svcs/serve/liaisons');
 	if ($college->field_dept_parent_uri[0]['value']) {
 		$query = "SELECT nid FROM {content_field_dept_uri} WHERE field_dept_uri_value = '%s'";
 	  $result = db_fetch_object(db_query($query, $college->field_dept_parent_uri[0]['value']));
 	  $parent = node_load($result->nid);
-		$breadcrumb[] = l($parent->title, 'mtest/dept/' . $parent->nid);
+		$breadcrumb[] = l($parent->title, 'svcs/serve/liaisons/dept/' . $parent->nid);
 	}
 	//$breadcrumb[] = $college->title;
 	drupal_set_breadcrumb($breadcrumb);
@@ -331,7 +331,7 @@ function liaisons_browse_colleges($nid) {
  		$text .= '<h3>Liaisons</h3>';
  		$text .= '<ul>';
  		foreach ($liaisons as $l) {
- 			$text .= '<li>' . l($l->title, 'mtest/liaison/' . $l->nid) . '</li>';
+ 			$text .= '<li>' . l($l->title, 'svcs/serve/liaisons/liaison/' . $l->nid) . '</li>';
  		}
  		$text .= '</ul>';
  	}
@@ -353,7 +353,7 @@ function liaisons_browse_colleges($nid) {
 		$text .= '<h3>Departments:</h3>';
 		$text .= '<ul>';
 		foreach ($departments as $d) {
-			$text .= '<li>' . l($d->title, 'mtest/dept/' . $d->nid) . '</li>';
+			$text .= '<li>' . l($d->title, 'svcs/serve/liaisons/dept/' . $d->nid) . '</li>';
 		}
 		$text .= '</ul>';
 	}
@@ -450,7 +450,7 @@ function theme_liaisons_home($text) {
 // function liaisons_search_form() {
 
 //   $opts = array('absolute'=>TRUE);
-//   $url = url('mtest', $opts);
+//   $url = url('svcs/serve/liaisons', $opts);
 //   $form['searchBox'] = array(
 //     '#type' => 'textfield',
 //     '#id' => 'searchBox',
@@ -476,5 +476,5 @@ function theme_liaisons_home($text) {
  * Submit function for liaisons_search_form()
  */
 // function liaisons_search_form_submit($form, &$form_state) {
-//    $form_state['redirect'] = 'mtest/liaison/search/'.$form_state['values']['searchBox'];
+//    $form_state['redirect'] = 'svcs/serve/liaisons/liaison/search/'.$form_state['values']['searchBox'];
 // }
