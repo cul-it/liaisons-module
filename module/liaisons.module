@@ -249,15 +249,16 @@ function liaisons_search_liaisons($query_string) {
 function liaisons_format_liaison($liaison) {
 	
 	// photo
-	$text = '<img src="' . $liaison->field_image_url[0]['url'] 
-				. '" height="200" width="200" style="float:left; border: 1px solid" />';
+	$text = '<div>';
+	$text .= '<div style="width:200px; float:left;"><img src="' . $liaison->field_image_url[0]['url'] 
+				. '" style="padding: 0px; width:200px; height:200px; float:right; " /></div>';
 
-	$text .= '<div style="float:left; padding: 20px;">';
+	$text .= '<div style="float:left; padding: 20px; overflow:auto; max-width:500px;">';
 	// Add name
 	$text .= '<h2>' . $liaison->title . '</h2>';
 
 	// title
-	$text .= '<div>' . $liaison->field_work_title[0]['value'] . '</div>';
+	$text .= '<div>' . strip_tags($liaison->field_work_title[0]['value']) . '</div>';
 
 	// more info
 	$text .= '<div>' 
@@ -281,7 +282,7 @@ function liaisons_format_liaison($liaison) {
 		}
 	}
 
-	$text .= '</div>';
+	$text .= '</div></div>';
 
 	return $text;
 }

@@ -2,6 +2,6 @@
 name = "Liaisons"
 description = "Provides an organized display of library liaisons and associated University departments that have liaisons."
 core = 6.x
-version = 6.x-1.0
+version = 6.x-1.1
 php = 5.2.6
 package = Cornell University Library
