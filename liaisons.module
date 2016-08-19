@@ -14,43 +14,66 @@
  */
 function liaisons_menu() {
 
+  $base = variable_get('liaisons_base_path', 'liaisons');
+
 	// Entry point to liaisons system
-	$items['svcs/serve/liaisons'] = array(
+	$items[$base] = array(
     'title' => 'Library Liaisons Program',
     'page callback' => 'liaisons_home',
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
   );
   // Display of a single liaison
-  $items['svcs/serve/liaisons/liaison'] = array(
+  $items[$base . '/liaison'] = array(
     'title' => 'Liaison',
     'page callback' => 'liaisons_show_liaison',
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
   ); 
   // Display of all liaisons
-  $items['svcs/serve/liaisons/liaison/list'] = array(
+  $items[$base . '/liaison/list'] = array(
     'title' => 'All Liaisons',
     'page callback' => 'liaisons_list_liaisons',
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
   ); 
   // Search results for a liaison name
-  $items['svcs/serve/liaisons/liaison/search'] = array(
-    'title' => 'Liaison Search Results',
-    'page callback' => 'liaisons_search_liaisons',
-    'access arguments' => array('access content'),
-    'type' => MENU_CALLBACK,
-  ); 
+  // $items[$base . '/liaison/search'] = array(
+  //   'title' => 'Liaison Search Results',
+  //   'page callback' => 'liaisons_search_liaisons',
+  //   'access arguments' => array('access content'),
+  //   'type' => MENU_CALLBACK,
+  // ); 
   // Display of a college or department or center
-  $items['svcs/serve/liaisons/dept'] = array(
+  $items[$base . '/dept'] = array(
     'title' => 'Department',
     'page callback' => 'liaisons_browse_colleges',
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
   );
+  // Configuration page
+  $items['admin/config/liaisons'] = array(
+  	'title' => 'Liaisons settings',
+    'description' => 'Configure the Liaisons module',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('liaisons_admin_form'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'liaisons.admin.inc'
+  );
 
   return $items;	
+}
+
+/**
+ * Implements hook_permission().
+ */
+function liaisons_permission() {
+  return array('administer liaisons' => array(
+     'title' => t('Administer Liaisons'),
+     'description' => t('Set parameters for Liaisons'),
+     )
+  );
 }
 
 /**
@@ -63,7 +86,7 @@ function liaisons_cron() {
 	// while (FEEDS_BATCH_COMPLETE != feeds_source('liaison_department', 0)->import());
 	// while (FEEDS_BATCH_COMPLETE != feeds_source('liaison_feed', 0)->import());
 	// while (FEEDS_BATCH_COMPLETE != feeds_source('liaison_organizations', 0)->import());
-	feeds_batch_set('import', 'liaison_feed', 0, $context);
+	// feeds_batch_set('import', 'liaison_feed', 0, $context);
 
 	// feeds_batch_set(t('Importing'), 'import', 'liaison_department', 0);
 	// feeds_batch_set(t('Importing'), 'import', 'liaison_feed', 0);
@@ -75,21 +98,15 @@ function liaisons_cron() {
  * Display the "home" page for the liaisons system.
  *
  * This function presents sections for liaisons, colleges, and separate
- * programs and centers. The liaisons section includes a search box and
+ * programs and centers. The liaisons section includes
  * a link to all liaisons; colleges and departments are linked to a 
  * view for that entity.
  */
 function liaisons_home() {
 
-	// Set breadcrumbs
-	$breadcrumb = array();
-	$breadcrumb[] = l('Home', '');
-	$breadcrumb[] = l('Liaisons', 'svcs/serve/liaisons');
-	drupal_set_breadcrumb($breadcrumb);
+    liaisons_set_breadcrumbs();
 
-	// Retrieve lists of the various data types
-	//$liaisons = liaisons_get_liaisons();
-	//sort($liaisons);
+	// Retrieve lists of the top-level data types
 	$college_nids = liaisons_get_nodes('liaison_college');
 	$center_nids  = liaisons_get_nodes('liaison_center');
 
@@ -103,8 +120,8 @@ function liaisons_home() {
 	';
 
 	// Liaisons: link to ful list 
-	$text .= '<h1>Liaisons</h1>';
-	$text .= '<p>' . l('See all liaisons', 'svcs/serve/liaisons/liaison/list') . '</p>';
+	//$text .= '<h1>Liaisons</h1>';
+	$text .= '<p><strong>' . l('See all liaisons', 'services/liaisons/liaison/list') . '</strong></p>';
 	// $text .= '<p>Search by liaison name</p>';
 	// $text .= drupal_get_form('liaisons_search_form');
 
@@ -117,7 +134,7 @@ function liaisons_home() {
 	// 	//$text .= "<pre>" . print_r($node, 1) . "</pre>";
 	// }
 
-	$text .= '<br/><h1>Search Liaisons by Colleges</h1>';
+	$text .= '<h2>Liaisons by Colleges</h2>';
 
 	// Convert nids into nodes and sort them
 	$colleges = array();
@@ -134,18 +151,19 @@ function liaisons_home() {
 	
 	$text .= "<ul>";
 	foreach ($colleges as $c) {
-		$text .= "<li>" . l($c->title, "svcs/serve/liaisons/dept/" . $c->nid) . '</li>';
+		$text .= "<li>" . l($c->title, "services/liaisons/dept/" . $c->nid) . '</li>';
 	}
 	$text .= "</ul>";
 
-	$text .= '<br/><h1>Search Liaisons by Centers and Programs</h1>';
+	$text .= '<h2>Liaisons by Centers and Programs</h2>';
 	$text .= "<ul>";
 	foreach ($centers as $c) {
-		$text .= "<li>" . l($c->title, "svcs/serve/liaisons/dept/" . $c->nid) . '</li>';
+		$text .= "<li>" . l($c->title, "services/liaisons/dept/" . $c->nid) . '</li>';
 	}
 	$text .= "</ul>";
 
-	return theme('liaisons_home', $text);
+	return $text;
+	#return theme('liaisons_home', $text);
 }
 
 /*
@@ -156,16 +174,10 @@ function liaisons_home() {
  */
 function liaisons_show_liaison($nid) {
 
-	// Set breadcrumbs
-	$breadcrumb = array();
-	$breadcrumb[] = l('Home', '');
-	$breadcrumb[] = l('Liaisons', 'svcs/serve/liaisons');
-	$breadcrumb[] = 'Liaison';
-	drupal_set_breadcrumb($breadcrumb);
+    liaisons_set_breadcrumbs();
 
-	$text = liaisons_format_liaison(node_load($nid));
-
-	return theme('liaisons_home', $text);
+	return liaisons_format_liaison(node_load($nid));
+	#return theme('liaisons_home', $text);
 }
 
 /*
@@ -173,12 +185,7 @@ function liaisons_show_liaison($nid) {
  */
 function liaisons_list_liaisons() {
 
-	// Set breadcrumbs
-	$breadcrumb = array();
-	$breadcrumb[] = l('Home', '');
-	$breadcrumb[] = l('Liaisons', 'svcs/serve/liaisons');
-	$breadcrumb[] = 'Liaison';
-	drupal_set_breadcrumb($breadcrumb);
+	liaisons_set_breadcrumbs();
 
 	$nids = liaisons_get_nodes('liaison');
 	$liaisons = array();
@@ -187,13 +194,13 @@ function liaisons_list_liaisons() {
 	}
 	usort($liaisons, 'liaisons_name_sort');
 
-	$text .= '';
+	$text = '';
 	foreach ($liaisons as $l) {
-		$text .= '<div style="clear:both; padding: 10px">' 
-					. liaisons_format_liaison($l) . '</div>';
+		$text .=  liaisons_format_liaison($l);
 	}
 
-	return theme('liaisons_home', $text);
+	return $text;
+	#return theme('liaisons_home', $text);
 }
 
 /*
@@ -208,34 +215,35 @@ function liaisons_list_liaisons() {
  * @return
  *   A themed list of formatted liaison nodes. 
  */
-function liaisons_search_liaisons($query_string) {
+// function liaisons_search_liaisons($query_string) {
 
-	// Set breadcrumbs
-	$breadcrumb = array();
-	$breadcrumb[] = l('Home', '');
-	$breadcrumb[] = l('Liaisons', 'svcs/serve/liaisons');
-	$breadcrumb[] = 'Liaison';
-	drupal_set_breadcrumb($breadcrumb);
+// 	// Set breadcrumbs
+// 	$breadcrumb = array();
+// 	$breadcrumb[] = l('Home', '');
+// 	$breadcrumb[] = l('Liaisons', 'svcs/serve/liaisons');
+// 	$breadcrumb[] = 'Liaison';
+// 	drupal_set_breadcrumb($breadcrumb);
 
-	$result = db_query("SELECT nid FROM node WHERE type = 'liaison' AND title LIKE '%%%s%'", $query_string);
-	$text = '';
-	$liaisons = array();
-	while ($obj = db_fetch_object ($result)) {
-		// Store formatted liaisons in a hash so we can sort them before presentation
-		$node = node_load($obj->nid);
-		// Hash key is lastnamefirstname, which ought to be unique
-		$liaisons[$node->field_lastname[0]['value'] . $node->field_firstname[0]['value']] = liaisons_format_liaison($node);
-	}
-	ksort($liaisons);
+// 	$result = db_query("SELECT nid FROM node WHERE type = :type AND title LIKE '%:title%'", array(':type' => 'liaison', ':title' => $query_string));
+// 	$text = '';
+// 	$liaisons = array();
+// 	foreach ($result as $obj) {
+// 		// Store formatted liaisons in a hash so we can sort them before presentation
+// 		$node = node_load($obj->nid);
+// 		// Hash key is lastnamefirstname, which ought to be unique
+// 		$liaisons[$node->field_lastname[0]['value'] . $node->field_firstname[0]['value']] = liaisons_format_liaison($node);
+// 	}
+// 	ksort($liaisons);
 
-	foreach ($liaisons as $l) {
-		$text .= '<div style="clear:both; padding: 10px">' . $l . '</div>';
-	}
+// 	foreach ($liaisons as $l) {
+// 		$text .= '<div style="clear:both; padding: 10px">' . $l . '</div>';
+// 	}
 
-	if ($text == '') { $text = "<p>No results found for '$query_string'.</p>"; }
+// 	if ($text == '') { $text = "<p>No results found for '$query_string'.</p>"; }
 
-	return theme('liaisons_home', $text);
-}
+// 	return $text;
+// 	#return theme('liaisons_home', $text);
+// }
 
 /*
  * Format information about a single liaison.
@@ -247,42 +255,60 @@ function liaisons_search_liaisons($query_string) {
  *   An HTML block with liaison information
  */
 function liaisons_format_liaison($liaison) {
-	
 	// photo
-	$text = '<div>';
-	$text .= '<div style="width:200px; float:left;"><img src="' . $liaison->field_image_url[0]['url'] 
-				. '" style="padding: 0px; width:200px; height:200px; float:right; " /></div>';
 
-	$text .= '<div style="float:left; padding: 20px; overflow:auto; max-width:500px;">';
+	$text = '<div class="bridge bridge-one-column">';
+	$text .= '<div class="bridge-section"><img src="' . $liaison->field_image_url['und'][0]['url'] 
+				. '" class="img-thumbnail pull-left" />';
+
+	$text .= '<div class="bridge-content">';
 	// Add name
-	$text .= '<h2>' . $liaison->title . '</h2>';
+	$text .= '<h3>' . $liaison->title . '</h3>';
 
 	// title
-	$text .= '<div>' . strip_tags($liaison->field_work_title[0]['value']) . '</div>';
+	$text .= '<div class="liaison-title">' . strip_tags($liaison->field_work_title['und'][0]['value']) . '</div>';
 
 	// more info
-	$text .= '<div>' 
-				. l('About this liaison', $liaison->field_liaison_uri[0]['value']) 
-				. '</div>';
+	$text .= '<div class="liaison-info">' 
+				. l('About', $liaison->field_liaison_uri['und'][0]['value']) 
+				. '<span class="divider">|</span>';
 
 	// email/contact
-	$text .= '<div>' 
-				. l('Contact this liaison', 'mailto:' . $liaison->field_netid[0]['value'] . '@cornell.edu') 
+	$text .= l('Email', 'mailto:' . $liaison->field_netid['und'][0]['value'] . '@cornell.edu') 
 				. '</div>';
 
 	// Retrieve a list of the departments or colleges for which this individual is a liaison
-	$entities = $liaison->field_liaison_to;
-	$text .= '<h4>Liaison to:</h4>';
+	$entities = $liaison->field_liaison_to['und'];
+	$text .= '<div class="liaison-to">Liaison to</div>';
+	$text .= '<ul class="liaison-dept">';
 	if (count($entities) > 0) {
 		foreach ($entities as $e) {
-			$query = "SELECT nid FROM {content_field_dept_uri} WHERE field_dept_uri_value = '%s'";
-			$result = db_fetch_object(db_query($query, $e['value']));
-	  	$liaison_to = node_load($result->nid);
-			$text .= '<div>' . l($liaison_to->title, 'svcs/serve/liaisons/dept/' . $result->nid) . '</div>';
-		}
+
+      $query = new EntityFieldQuery();
+      $result = $query->entityCondition('entity_type', 'node')
+                      ->entityCondition('bundle', array('liaison_college', 'liaison_department', 'liaison_center'))
+                      ->fieldCondition('field_dept_uri', 'value',  $e['value'], '=')
+                      ->execute();
+      if ($result) {
+        $nid = key($result['node']);
+	    $liaison_to = node_load($nid);
+        if ($liaison_to) {
+  			$text .= '<li>';
+  			# Only link to departments if we're not already on the page
+  			if (strpos(current_path(), "dept/$nid") !== FALSE) {
+  				$text .= $liaison_to->title; 		
+  			}
+  			else {
+  				$text .= l($liaison_to->title, 'services/liaisons/dept/' . $nid);
+  			}
+  			$text .= '</li>';
+        }
+	  }
+    }
 	}
 
-	$text .= '</div></div>';
+	$text .= '</ul>';
+	$text .= '</div></div></div>';
 
 	return $text;
 }
@@ -302,47 +328,57 @@ function liaisons_format_liaison($liaison) {
 function liaisons_browse_colleges($nid) {
 
 	$college = node_load($nid);
-	$text = '<h1>' . $college->title . '</h1>';
+	$text = '<h2>' . $college->title . '</h2>';
 
-	// Set breadcrumbs
-	$breadcrumb = array();
-	$breadcrumb[] = l('Home', '');
-	$breadcrumb[] = l('Liaisons', 'svcs/serve/liaisons');
-	if ($college->field_dept_parent_uri[0]['value']) {
-		$query = "SELECT nid FROM {content_field_dept_uri} WHERE field_dept_uri_value = '%s'";
-	  $result = db_fetch_object(db_query($query, $college->field_dept_parent_uri[0]['value']));
-	  $parent = node_load($result->nid);
-		$breadcrumb[] = l($parent->title, 'svcs/serve/liaisons/dept/' . $parent->nid);
-	}
-	//$breadcrumb[] = $college->title;
-	drupal_set_breadcrumb($breadcrumb);
+    // Figure out whether we need a breadcrumb for the college 
+    // (i.e., this is a child department of something)
+    $college_breadcrumb = NULL;
+    if (isset($college->field_dept_parent_uri) && key($college->field_dept_parent_uri) != NULL) {
+
+        $query = new EntityFieldQuery();
+        $result = $query->entityCondition('entity_type', 'node')
+                        ->entityCondition('bundle', array('liaison_college', 'liaison_department', 'liaison_center'))
+                        ->fieldCondition('field_dept_uri', 'value', $college->field_dept_parent_uri['und'][0]['value'], '=')
+                        ->execute();
+        if ($result) {
+            $nid = key($result['node']);
+            $parent = node_load($nid);
+            $college_breadcrumb = array(l($parent->title, 'services/liaisons/dept/' . key($result['node'])));
+        }
+
+    }
+
+    liaisons_set_breadcrumbs($college_breadcrumb);
 
 	// Figure out whether this entity has liaisons. If it does, show them.
 	$liaisons = array();
-	foreach ($college->field_dept_liaison_uri as $l) {
-		if ($l['value'] != null) {
-			$query = "SELECT nid FROM {content_type_liaison} WHERE field_liaison_uri_value = '%s'";
-	    $result = db_fetch_object(db_query($query, $l['value']));
-			$liaisons[] = node_load($result->nid);	
-		}
- 	}  
+  if (isset($college->field_dept_liaison_uri['und'])) {
+  	foreach ($college->field_dept_liaison_uri['und'] as $l) {
+  		if ($l && array_key_exists('value', $l)) {
+  			$query = "SELECT entity_id FROM {field_data_field_liaison_uri} WHERE field_liaison_uri_value = :value";
+  	        $result = db_query($query, array(':value' => $l['value']));
+            foreach ($result as $r) {
+  			   $liaisons[] = node_load($r->entity_id);
+            }	
+  		}
+   	}  
+  }
 	usort($liaisons, 'liaisons_name_sort');
 
  	if (count($liaisons) > 0) {
  		$text .= '<h3>Liaisons</h3>';
- 		$text .= '<ul>';
  		foreach ($liaisons as $l) {
- 			$text .= '<li>' . l($l->title, 'svcs/serve/liaisons/liaison/' . $l->nid) . '</li>';
+ 			$text .= liaisons_format_liaison($l);
+// 			$text .= '<li>' . l($l->title, 'services/liaisons/liaison/' . $l->nid) . '</li>';
  		}
- 		$text .= '</ul>';
  	}
 
 	// Figure out whether this deparmtent has sub-departments. If it does, show them.
-  $query = "SELECT nid FROM {content_field_dept_parent_uri} WHERE field_dept_parent_uri_value = '%s'";
-  $result = db_query($query, $college->field_dept_uri[0]['value']);
+  $query = "SELECT entity_id FROM {field_data_field_dept_parent_uri} WHERE field_dept_parent_uri_value = :value";
+  $result = db_query($query, array(':value' => $college->field_dept_uri['und'][0]['value']));
 	$nids = array();
-	while ($obj = db_fetch_object ($result)) {
-  	$nids[] = $obj->nid;
+	foreach ($result as $obj) {
+  		$nids[] = $obj->entity_id;
 	}
 	$departments = array();
 	foreach ($nids as $nid) {
@@ -351,15 +387,20 @@ function liaisons_browse_colleges($nid) {
 	usort($departments, 'liaisons_node_sort');
 
 	if (count($departments) > 0) {
-		$text .= '<h3>Departments:</h3>';
+		$text .= '<h3>Departments</h3>';
 		$text .= '<ul>';
 		foreach ($departments as $d) {
-			$text .= '<li>' . l($d->title, 'svcs/serve/liaisons/dept/' . $d->nid) . '</li>';
+			$text .= '<li>' . l($d->title, 'services/liaisons/dept/' . $d->nid) . '</li>';
 		}
 		$text .= '</ul>';
 	}
+	elseif (count($liaisons) == 0) {
+ 		$text .= '<p>There are currently no liaisons at this time.</p>';
+ 		$text .= '<p><a href="/services/liaisons/liaison/list">See all liaisons</a></p>';
+	}
 
-	return theme('liaisons_home', $text);
+	return $text;
+	#return theme('liaisons_home', $text);
 }
 
 /*
@@ -389,12 +430,12 @@ function liaisons_node_sort($a, $b) {
  */
 function liaisons_name_sort($a, $b) {
 
-	$a_first = $a->field_firstname[0]['value'];
-	$a_last = $a->field_lastname[0]['value'];
-	$b_first = $b->field_firstname[0]['value'];
-	$b_last = $b->field_lastname[0]['value'];
+	$a_first = $a->field_firstname['und'][0]['value'];
+	$a_last = $a->field_lastname['und'][0]['value'];
+	$b_first = $b->field_firstname['und'][0]['value'];
+	$b_last = $b->field_lastname['und'][0]['value'];
 
-	if ($a_last == $b->last) { 
+	if ($a_last == $b_last) { 
 		if ($a_first == $b_first) {
 			return 0; 
 		}
@@ -418,9 +459,9 @@ function liaisons_name_sort($a, $b) {
  */ 
 function liaisons_get_nodes($type) {
 
-	$result = db_query("SELECT nid FROM node WHERE type = '%s' ", $type);
+	$result = db_query("SELECT nid FROM node WHERE type = :type ", array(':type' => $type));
 	$nids = array();
-	while ($obj = db_fetch_object ($result)) {
+	foreach($result as $obj) {
 	  	$nids[] = $obj->nid;
 	}
 
@@ -443,6 +484,25 @@ function theme_liaisons_home($text) {
 
 	$output .=  $text;
 	return $output;
+}
+
+/**
+ *  Handle breadcrumbs
+ */
+function liaisons_set_breadcrumbs($crumbs = NULL) {
+
+    $breadcrumb = array();
+    $breadcrumb[] = l('Home', '');
+    $breadcrumb[] = l('Services', 'services');
+    $breadcrumb[] = l('Library Liaison Program', 'services/liaisons');
+    if ($crumbs) {
+        foreach ($crumbs as $c) {
+            $breadcrumb[] = $c;
+        }
+    }
+    //$breadcrumb[] = 'Liaison';
+
+    drupal_set_breadcrumb($breadcrumb);
 }
 
 /**
