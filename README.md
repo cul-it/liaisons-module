@@ -1,4 +1,4 @@
-## Liasons
+## Liaisons
 
 Drupal module.
 
