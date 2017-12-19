@@ -259,7 +259,7 @@ function liaisons_format_liaison($liaison) {
 
 	$text = '<div class="bridge bridge-one-column">';
 	$text .= '<div class="bridge-section"><img src="' . $liaison->field_image_url['und'][0]['url'] 
-				. '" class="img-thumbnail pull-left" />';
+				. '" class="img-thumbnail pull-left" alt="" />';
 
 	$text .= '<div class="bridge-content">';
 	// Add name
