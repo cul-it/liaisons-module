@@ -29,21 +29,21 @@ function liaisons_menu() {
     'page callback' => 'liaisons_show_liaison',
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
-  ); 
+  );
   // Display of all liaisons
   $items[$base . '/liaison/list'] = array(
     'title' => 'All Liaisons',
     'page callback' => 'liaisons_list_liaisons',
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
-  ); 
+  );
   // Search results for a liaison name
   // $items[$base . '/liaison/search'] = array(
   //   'title' => 'Liaison Search Results',
   //   'page callback' => 'liaisons_search_liaisons',
   //   'access arguments' => array('access content'),
   //   'type' => MENU_CALLBACK,
-  // ); 
+  // );
   // Display of a college or department or center
   $items[$base . '/dept'] = array(
     'title' => 'Department',
@@ -62,7 +62,7 @@ function liaisons_menu() {
     'file' => 'liaisons.admin.inc'
   );
 
-  return $items;	
+  return $items;
 }
 
 /**
@@ -99,7 +99,7 @@ function liaisons_cron() {
  *
  * This function presents sections for liaisons, colleges, and separate
  * programs and centers. The liaisons section includes
- * a link to all liaisons; colleges and departments are linked to a 
+ * a link to all liaisons; colleges and departments are linked to a
  * view for that entity.
  */
 function liaisons_home() {
@@ -113,13 +113,13 @@ function liaisons_home() {
 	// Header text
 	$text = '
 		<p>Liaisons are your go-to librarians, connecting you to library services
-		and collections. They are subject specialists who provide support 
-		for faculty and student research, instruction, and scholarly communication, 
-		who build rich library collections or can refer you to other library 
+		and collections. They are subject specialists who provide support
+		for faculty and student research, instruction, and scholarly communication,
+		who build rich library collections or can refer you to other library
 		experts.</p><p>Discover: Who’s my library liaison?</p>
 	';
 
-	// Liaisons: link to ful list 
+	// Liaisons: link to ful list
 	//$text .= '<h1>Liaisons</h1>';
 	$text .= '<p><strong>' . l('See all liaisons', 'services/liaisons/liaison/list') . '</strong></p>';
 	// $text .= '<p>Search by liaison name</p>';
@@ -148,7 +148,7 @@ function liaisons_home() {
 		$centers[] = node_load($nid);
 	}
 	usort($centers, 'liaisons_node_sort');
-	
+
 	$text .= "<ul>";
 	foreach ($colleges as $c) {
 		$text .= "<li>" . l($c->title, "services/liaisons/dept/" . $c->nid) . '</li>';
@@ -205,15 +205,15 @@ function liaisons_list_liaisons() {
 
 /*
  * Return a formatted list of liaison search results.
- * 
+ *
  * Performs a search for liaison node titles that contain the search text.
  * Each result is loaded and formatted.
- * 
+ *
  * @param string $query_string
  *   The text to search for in liaison node titles
- * 
+ *
  * @return
- *   A themed list of formatted liaison nodes. 
+ *   A themed list of formatted liaison nodes.
  */
 // function liaisons_search_liaisons($query_string) {
 
@@ -247,7 +247,7 @@ function liaisons_list_liaisons() {
 
 /*
  * Format information about a single liaison.
- * 
+ *
  * @param node $liaison
  *   A complete (liaison) node
  *
@@ -258,7 +258,7 @@ function liaisons_format_liaison($liaison) {
 	// photo
 
 	$text = '<div class="bridge bridge-one-column">';
-	$text .= '<div class="bridge-section"><img src="' . $liaison->field_image_url['und'][0]['url'] 
+	$text .= '<div class="bridge-section"><img src="' . $liaison->field_image_url['und'][0]['url']
 				. '" class="img-thumbnail pull-left" alt="" />';
 
 	$text .= '<div class="bridge-content">';
@@ -268,14 +268,11 @@ function liaisons_format_liaison($liaison) {
 	// title
 	$text .= '<div class="liaison-title">' . strip_tags($liaison->field_work_title['und'][0]['value']) . '</div>';
 
-	// more info
-	$text .= '<div class="liaison-info">' 
-				. l('About', $liaison->field_liaison_uri['und'][0]['value']) 
-				. '<span class="divider">|</span>';
-
-	// email/contact
-	$text .= l('Email', 'mailto:' . $liaison->field_netid['und'][0]['value'] . '@cornell.edu') 
-				. '</div>';
+  // email/contact
+  $email_address = $liaison->field_netid['und'][0]['value'] . '@cornell.edu';
+	$text .= '<div class="liaison-info">'
+        . l($email_address, 'mailto:' . $email_address)
+        . '</div>';
 
 	// Retrieve a list of the departments or colleges for which this individual is a liaison
 	$entities = $liaison->field_liaison_to['und'];
@@ -296,7 +293,7 @@ function liaisons_format_liaison($liaison) {
   			$text .= '<li>';
   			# Only link to departments if we're not already on the page
   			if (strpos(current_path(), "dept/$nid") !== FALSE) {
-  				$text .= $liaison_to->title; 		
+  				$text .= $liaison_to->title;
   			}
   			else {
   				$text .= l($liaison_to->title, 'services/liaisons/dept/' . $nid);
@@ -315,7 +312,7 @@ function liaisons_format_liaison($liaison) {
 
 /*
  * Display information about a college, department, or center.
- * 
+ *
  * Each entity is linked to the same function to display any liaisons it has
  * or sub-departments or units that it may contain.
  *
@@ -330,7 +327,7 @@ function liaisons_browse_colleges($nid) {
 	$college = node_load($nid);
 	$text = '<h2>' . $college->title . '</h2>';
 
-    // Figure out whether we need a breadcrumb for the college 
+    // Figure out whether we need a breadcrumb for the college
     // (i.e., this is a child department of something)
     $college_breadcrumb = NULL;
     if (isset($college->field_dept_parent_uri) && key($college->field_dept_parent_uri) != NULL) {
@@ -359,9 +356,9 @@ function liaisons_browse_colleges($nid) {
   	        $result = db_query($query, array(':value' => $l['value']));
             foreach ($result as $r) {
   			   $liaisons[] = node_load($r->entity_id);
-            }	
+            }
   		}
-   	}  
+   	}
   }
 	usort($liaisons, 'liaisons_name_sort');
 
@@ -435,9 +432,9 @@ function liaisons_name_sort($a, $b) {
 	$b_first = $b->field_firstname['und'][0]['value'];
 	$b_last = $b->field_lastname['und'][0]['value'];
 
-	if ($a_last == $b_last) { 
+	if ($a_last == $b_last) {
 		if ($a_first == $b_first) {
-			return 0; 
+			return 0;
 		}
 		else {
 			return ($a_first < $b_first) ? -1 : 1;
@@ -450,13 +447,13 @@ function liaisons_name_sort($a, $b) {
 
 /*
  * Return a list of node IDs of a given node type
- * 
+ *
  * @param $type
  *   The Drupal node type to return (e.g., liaison, liaison_college)
- * 
+ *
  * @return
  *   An array of node IDs
- */ 
+ */
 function liaisons_get_nodes($type) {
 
 	$result = db_query("SELECT nid FROM node WHERE type = :type ", array(':type' => $type));
